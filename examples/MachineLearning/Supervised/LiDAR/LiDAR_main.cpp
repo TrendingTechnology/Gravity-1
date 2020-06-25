@@ -1259,7 +1259,7 @@ int main (int argc, char * argv[])
         S.run();
         
         
-        for (int i = 0; i<500; i++) {
+        for (int i = 0; i<x_rot1.get_nb_instances(); i++) {
             pre_x.add_val(x_rot1.eval(i));
             pre_y.add_val(y_rot1.eval(i));
             pre_z.add_val(z_rot1.eval(i));
@@ -1267,7 +1267,7 @@ int main (int argc, char * argv[])
             y_uav.add_val(y_uav1.eval(i));
             z_uav.add_val(z_uav1.eval(i));
         }
-        for (int i = 0; i<500; i++) {
+        for (int i = 0; i<x_rot2.get_nb_instances(); i++) {
             pre_x.add_val(x_rot2.eval(i));
             pre_y.add_val(y_rot2.eval(i));
             pre_z.add_val(z_rot2.eval(i));

@@ -16,10 +16,10 @@ find_package(Python3 COMPONENTS Development NumPy)
 option(Gurobi "Link to GUROBI libraries" OFF)
 
 # Find IPOPT (optional)
-option(Ipopt "Link to IPOPT libraries" OFF)
+option(Ipopt "Link to IPOPT libraries" ON)
 
 # Find LASlib (optional)
-option(LASlib "Link to LASlib libraries" OFF)
+option(LASlib "Link to LASlib libraries" ON)
 
 # Find XLNT (optional)
 option(Xlnt "Link to XLNT libraries" OFF)
