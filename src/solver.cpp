@@ -1136,9 +1136,11 @@ namespace gravity {
         vector<double> xsolution(_nb_vars);
         vector<double> xinterior(_nb_vars);
         vector<double> xcurrent, xres;
-	int worker_id, nb_workers;
+#ifdef USE_MPI
+        int worker_id, nb_workers;
         auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
         auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
+#endif
         get_solution(xsolution);
         set_solution(obbt_solution);
         const double active_tol_sol=1e-12, zero_tol=1e-6;
@@ -1762,7 +1764,7 @@ namespace gravity {
     }
     
     template<>
-    int Model<>::cuts_MPI(vector<shared_ptr<Model<>>>& batch_models, int batch_model_count, const Model<>& interior_model, shared_ptr<Model<>> lin, int& oacuts, double active_tol, int run_obbt_iter, double range_tol, vector<int>& sol_status, string vname, std::vector<std::string>& repeat_list){
+    int Model<>::cuts_MPI(vector<shared_ptr<Model<>>>& batch_models, int batch_model_count, const Model<>& interior_model, shared_ptr<Model<>> lin, int& oacuts, double active_tol, int run_obbt_iter, double range_tol, vector<int>& sol_status, string vname, std::vector<std::string>& objective_models, std::vector<std::string>& repeat_list){
         int worker_id, nb_workers;
         auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
         auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
@@ -1808,7 +1810,7 @@ namespace gravity {
                                 viol=1;
                             }
                             if(viol_i==1){
-                                repeat_list.push_back(batch_models[i-limits[w_id]]->_name);
+                                repeat_list.push_back(objective_models[i]);
                             }
                             if(cut_size!=0){
                                 if(worker_id!=w_id){

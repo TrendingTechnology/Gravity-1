@@ -624,18 +624,21 @@ namespace gravity {
         auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
         int count=0;
         DebugOff("I'm worker ID: " << worker_id << ", I'm getting ready to send my status " << endl);
-        for (auto w_id = 0; w_id<nb_workers; w_id++) {
-            if(w_id+1<limits.size()){
-                count=0;
-                if(worker_id==w_id){
-                    for (auto i = limits[w_id]; i < limits[w_id+1]; i++) {
-                        auto model = models[count++];
-                        sol_status[i]=model->_status;
+   
+        statusw.resize(0,0);
+        statusw_length=0;
+
+              if(worker_id+1<limits.size()){
+                    for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
+                        statusw.push_back(models[i-limits[worker_id]]->_status);
                     }
-                }
-                DebugOff("I'm worker ID: " << worker_id << "I will call MPI_Bcasr with i = " << i << " and w_id =  " << w_id << endl);
-                MPI_Bcast(&sol_status[limits[w_id]], (limits[w_id+1]-limits[w_id]), MPI_INT, w_id, MPI_COMM_WORLD);
-            }
+                  statusw_length=limits[w_id+1]-limits[w_id];
+              }
+        
+        vector<int> recv_counts(limits.begin()+1, limits.end());
+        for(auto i=recv_counts.size();)
+            MPI_Allgatherv(&statusw[0], statusw_length, MPI_DOUBLE, &sol_status[0], , , MPI_DOUBLE,
+                          MPI_COMM_WORLD);
         }
         //MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -692,6 +695,7 @@ namespace gravity {
                                 sol_val.at(i)=solution;
                             }
                         MPI_Bcast(&sol_val[i][0], nb_vars, MPI_DOUBLE, w_id, MPI_COMM_WORLD);
+                        
                     }
                 }
             }

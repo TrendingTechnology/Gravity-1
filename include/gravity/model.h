@@ -6269,7 +6269,7 @@ namespace gravity {
         int cuts_parallel(vector<shared_ptr<Model<>>> batch_models, int batch_model_count, const Model<type>& interior_model, shared_ptr<Model<>> lin, int& oacuts, double active_tol, int run_obbt_iter, double range_tol, string vname);
         int cuts_parallel(vector<shared_ptr<Model<>>> batch_models, int batch_model_count, const Model<type>& interior_model, shared_ptr<Model<>> lin, int& oacuts, double active_tol, int run_obbt_iter, double range_tol, string vname, std::vector<std::string>& repeat_list);
         int cuts_MPI(vector<shared_ptr<Model<>>>& batch_models, int batch_model_count, const Model<type>& interior_model, shared_ptr<Model<>> lin, int& oacuts, double active_tol, int run_obbt_iter, double range_tol, vector<int>& sol_status, string vname);
-        int cuts_MPI(vector<shared_ptr<Model<>>>& batch_models, int batch_model_count, const Model<type>& interior_model, shared_ptr<Model<>> lin, int& oacuts, double active_tol, int run_obbt_iter, double range_tol, vector<int>& sol_status, string vname, std::vector<std::string>& repeat_list);
+        int cuts_MPI(vector<shared_ptr<Model<>>>& batch_models, int batch_model_count, const Model<type>& interior_model, shared_ptr<Model<>> lin, int& oacuts, double active_tol, int run_obbt_iter, double range_tol, vector<int>& sol_status, string vname, std::vector<std::string>& objective_models, std::vector<std::string>& repeat_list);
         void reset_lazy();
         int num_obbt_prob(){
             int count=0;

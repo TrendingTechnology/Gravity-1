@@ -6355,7 +6355,7 @@ namespace gravity {
 #endif
                                                 viol=1;
                                                 lin_count=0;
-                                                while((viol==1) && (lin_count<5)){
+                                                while((viol==1) && (lin_count<1)){
                                                     if(lin_count>=1){
 #ifdef USE_MPI
                                                         if(worker_id==0){
@@ -6524,15 +6524,15 @@ MPI_Barrier(MPI_COMM_WORLD);
                                                         else{
                                                             cut_type="allvar";
                                                         }
+                                                            repeat_list.clear();
 #ifdef USE_MPI
                                                         if(worker_id==0){
                                                             DebugOn("calling cuts_mpi "<<obbt_subproblem_count<<endl);
                                                         }
-                                                         repeat_list.clear();
-                                                        viol=relaxed_model->cuts_MPI(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, sol_status, cut_type, repeat_list);
+                                                     
+                                                        viol=relaxed_model->cuts_MPI(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, sol_status, cut_type, objective_models, repeat_list);
                                                         
 #else
-                                                        repeat_list.clear();
                                                         viol=relaxed_model->cuts_parallel(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
 #endif
                                                         obbt_model->reset_lazy();
@@ -6580,7 +6580,7 @@ MPI_Barrier(MPI_COMM_WORLD);
                                                     lin_count++;
                                                 }
                                                // DebugOn("Repeat_list "<<repeat_list.size()<<endl);
-                                                repeat_list.clear();
+                                               // repeat_list.clear();
                                                 objective_models.clear();
                                                 if(linearize){
                                                 for(auto &r:repeat_list){
