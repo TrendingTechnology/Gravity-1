@@ -290,6 +290,7 @@ namespace gravity {
     int run_parallel(const vector<shared_ptr<gravity::Model<double>>>& models, gravity::SolverType stype, double tol, unsigned nr_threads, const string& lin_solver, int max_iter){
         std::vector<thread> threads;
         std::vector<bool> feasible;
+        double t1,t2;
         if(models.size()==0){
             DebugOff("in run_parallel(models...), models is empty, returning");
             return -1;

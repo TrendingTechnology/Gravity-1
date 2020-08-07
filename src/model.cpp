@@ -6355,7 +6355,7 @@ namespace gravity {
 #endif
                                                 viol=1;
                                                 lin_count=0;
-                                                while((viol==1) && (lin_count<1)){
+                                                while((viol==1) && (lin_count<5)){
                                                     if(lin_count>=1){
 #ifdef USE_MPI
                                                         if(worker_id==0){
@@ -6370,7 +6370,7 @@ namespace gravity {
                                                     sol_status.resize(batch_model_count,-1);
                                                     sol_obj.resize(batch_model_count,-1.0);
 #ifdef USE_MPI
-MPI_Barrier(MPI_COMM_WORLD);
+                                                    MPI_Barrier(MPI_COMM_WORLD);
                                                     run_MPI_new(objective_models, sol_obj, sol_status,batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads,"ma27",2000,2000, share_obj);
 #else
                                                     run_parallel_new(objective_models, sol_obj, sol_status, batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads, "ma27", 2000);
@@ -6380,13 +6380,13 @@ MPI_Barrier(MPI_COMM_WORLD);
                                                     DebugOff("Done running batch models, solve time = " << to_string(batch_time) << endl);
                                                     auto model_count=0;
                                                     int model_id = 0;
-                                #ifdef USE_MPI
-                                                            if(worker_id==0){
-                                                              DebugOn("time before bounds update "<<get_wall_time()-solver_time_start<<endl);
-                                                            }   
+#ifdef USE_MPI
+                                                    if(worker_id==0){
+                                                        DebugOn("time before bounds update "<<get_wall_time()-solver_time_start<<endl);
+                                                    }
 #endif
-                    
-				for (auto s=0;s<batch_model_count;s++)
+                                                    
+                                                    for (auto s=0;s<batch_model_count;s++)
                                                     {
                                                         /* Update bounds only if the model status is solved to optimal */
                                                         if(sol_status.at(s)==0)
@@ -6524,12 +6524,12 @@ MPI_Barrier(MPI_COMM_WORLD);
                                                         else{
                                                             cut_type="allvar";
                                                         }
-                                                            repeat_list.clear();
+                                                        repeat_list.clear();
 #ifdef USE_MPI
                                                         if(worker_id==0){
                                                             DebugOn("calling cuts_mpi "<<obbt_subproblem_count<<endl);
                                                         }
-                                                     
+                                                        
                                                         viol=relaxed_model->cuts_MPI(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, sol_status, cut_type, objective_models, repeat_list);
                                                         
 #else
@@ -6545,11 +6545,11 @@ MPI_Barrier(MPI_COMM_WORLD);
 #endif
                                                     }
 #ifdef USE_MPI
-                                                            if(worker_id==0){
-                                                              //DebugOn("time before copy "<<get_wall_time()-solver_time_start<<endl);
-                                                            }
+                                                    if(worker_id==0){
+                                                        //DebugOn("time before copy "<<get_wall_time()-solver_time_start<<endl);
+                                                    }
 #endif
-
+                                                    
                                                     for(auto &mod:batch_models){
                                                         if(linearize && repeat_list.size()>0){
                                                             for (auto con: obbt_model->_cons_vec){
@@ -6570,24 +6570,34 @@ MPI_Barrier(MPI_COMM_WORLD);
                                                     sol_obj.clear();
                                                     auto t=get_wall_time()-solver_time_start;
 #ifdef USE_MPI                                                                                          
-                                                                                                                                                       		       DebugOn(endl<<endl<<"wid "<<worker_id<<" Batch "<<batch_time<<" cuts "<<oacuts<<" time "<<t<<endl);
+                                                    DebugOn(endl<<endl<<"wid "<<worker_id<<" Batch "<<batch_time<<" cuts "<<oacuts<<" time "<<t<<endl);
 #else
                                                     DebugOn("Batch time "<<batch_time<<" nb oa cuts "<<oacuts<<" solver time "<<t<<endl);
 #endif  
                                                     if(!linearize){
                                                         break;
                                                     }
+                                                    if(linearize){
+                                                         if(!(next(it)==obbt_model->_vars_name.end() && next(it_key)==v.get_keys()->end() && dir=="UB")){
+                                                        break;
+                                                    }
+                                                    else{
+                                                        if(lin_count==4){
+                                                            repeat_list.clear();
+                                                    }
+                                                    }
+                                                    }
                                                     lin_count++;
                                                 }
-                                               // DebugOn("Repeat_list "<<repeat_list.size()<<endl);
-                                               // repeat_list.clear();
+                                                // DebugOn("Repeat_list "<<repeat_list.size()<<endl);
+                                                // repeat_list.clear();
                                                 objective_models.clear();
                                                 if(linearize){
-                                                for(auto &r:repeat_list){
-                                                    objective_models.push_back(r);
-                                                }
-                                                batch_model_count=repeat_list.size();
-                                                repeat_list.clear();
+                                                    for(auto &r:repeat_list){
+                                                        objective_models.push_back(r);
+                                                    }
+                                                    batch_model_count=repeat_list.size();
+                                                    repeat_list.clear();
                                                 }
                                                 else{
                                                     batch_model_count=0;
