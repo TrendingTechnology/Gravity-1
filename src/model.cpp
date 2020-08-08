@@ -6577,20 +6577,20 @@ namespace gravity {
                                                     if(!linearize){
                                                         break;
                                                     }
-                                                    if(linearize){
-                                                         if(!(next(it)==obbt_model->_vars_name.end() && next(it_key)==v.get_keys()->end() && dir=="UB")){
-                                                        break;
-                                                    }
-                                                    else{
-                                                        if(lin_count==4){
-                                                            repeat_list.clear();
-                                                    }
-                                                    }
-                                                    }
+//                                                    if(linearize){
+//                                                         if(!(next(it)==obbt_model->_vars_name.end() && next(it_key)==v.get_keys()->end() && dir=="UB")){
+//                                                        break;
+//                                                    }
+//                                                    else{
+//                                                        if(lin_count==4){
+//                                                            repeat_list.clear();
+//                                                    }
+//                                                    }
+//                                                    }
                                                     lin_count++;
                                                 }
                                                 // DebugOn("Repeat_list "<<repeat_list.size()<<endl);
-                                                // repeat_list.clear();
+                                                repeat_list.clear();
                                                 objective_models.clear();
                                                 if(linearize){
                                                     for(auto &r:repeat_list){
