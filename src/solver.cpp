@@ -289,9 +289,9 @@ namespace gravity {
     /* Runds models stored in the vector in parallel, using solver of stype and tolerance tol */
     int run_parallel(const vector<shared_ptr<gravity::Model<double>>>& models, gravity::SolverType stype, double tol, unsigned nr_threads, const string& lin_solver, int max_iter){
 #ifdef USE_MPI
-        int worker_id, nb_workers;
-        auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
-        auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
+          int worker_id, nb_workers;
+          auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
+          auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
 #endif
         std::vector<thread> threads;
         std::vector<bool> feasible;
@@ -320,7 +320,7 @@ namespace gravity {
         }
         t2=get_wall_time();
 #ifdef USE_MPI
-        DebugOn(endl<<endl<<"worker id "<<worker_id<<" ipopt solve time " << t2-t1<<endl<<endl);
+       DebugOn(endl<<endl<<"wid "<<worker_id<<" ipopt solve time " << t2-t1<<endl<<endl);
 #endif
         return 0;
     }
@@ -1895,8 +1895,10 @@ namespace gravity {
                 }
                 DebugOff("I'm worker ID: " << worker_id << ", I will be running models " << limits[worker_id] << " to " << limits[worker_id+1]-1 << endl);
                 int count=0;
-                auto vec = vector<shared_ptr<gravity::Model<double>>>();
-                for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
+auto vec = vector<shared_ptr<gravity::Model<double>>>();
+
+t1=get_wall_time();         
+for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
                     msname=objective_models.at(i);
                     mname=msname;
                     std::size_t pos = msname.find("|");
@@ -1919,14 +1921,25 @@ namespace gravity {
                     models[count]->reindex();
                     vec.push_back(models[count++]);
                 }
+t2=get_wall_time();
+DebugOn(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
+t1=get_wall_time(); 
                 run_parallel(vec,stype,tol,nr_threads,lin_solver,max_iter);
-            }
-            MPI_Barrier(MPI_COMM_WORLD);
+t2=get_wall_time();  
+DebugOn(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);          
+}
+//t1=get_wall_time(); 
+  //          MPI_Barrier(MPI_COMM_WORLD);
+    //        t2=get_wall_time();
+//DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier1 time "<<(t2-t1)<<endl);
             t1=get_wall_time();
-            send_status_new(models,limits, sol_status);
+	    send_status_new(models,limits, sol_status);
             t2=get_wall_time();
             DebugOn(endl<<endl<<"wid "<<worker_id<<" send status "<<(t2-t1)<<endl);
-            MPI_Barrier(MPI_COMM_WORLD);
+            t1=get_wall_time();
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    t2=get_wall_time();                                                                      
+            DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier2 time "<<(t2-t1)<<endl);        
             if(share_all_obj){
                 /* We will send the objective value of successful models */
                 t1=get_wall_time();
@@ -1934,9 +1947,11 @@ namespace gravity {
                 t2=get_wall_time();
                 DebugOn(endl<<endl<<"wid "<<worker_id<<" send obj "<<(t2-t1)<<endl);
             }
-            DebugOn(endl<<endl<<"wid "<<worker_id<<" send status "<<(t2-t1)<<endl);
         }
-        //   MPI_Barrier(MPI_COMM_WORLD);
+	t1=get_wall_time();
+        MPI_Barrier(MPI_COMM_WORLD);
+	t2=get_wall_time();
+        DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier3 time "<<(t2-t1)<<endl); 
         return max(err_rank, err_size);
         
     }

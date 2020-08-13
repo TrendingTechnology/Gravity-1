@@ -6359,7 +6359,7 @@ namespace gravity {
                                                     if(lin_count>=1){
 #ifdef USE_MPI
                                                         if(worker_id==0){
-                                                            DebugOn("resolving"<<endl);
+                                                            DebugOn("resolving "<<obbt_subproblem_count<<endl);
                                                         }
 #else
                                                         DebugOn("resolving"<<endl);
@@ -6370,7 +6370,12 @@ namespace gravity {
                                                     sol_status.resize(batch_model_count,-1);
                                                     sol_obj.resize(batch_model_count,-1.0);
 #ifdef USE_MPI
+						    auto t1=get_wall_time();
                                                     MPI_Barrier(MPI_COMM_WORLD);
+						    auto t2=get_wall_time();
+						    DebugOn(endl<<endl<<"wid "<<worker_id<<" Mbarrier time "<<(t2-t1)<<endl);
+						    batch_time_start = get_wall_time();
+						
                                                     run_MPI_new(objective_models, sol_obj, sol_status,batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads,"ma27",2000,2000, share_obj);
 #else
                                                     run_parallel_new(objective_models, sol_obj, sol_status, batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads, "ma27", 2000);
