@@ -6733,8 +6733,7 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
 #ifdef USE_MPI
 constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
 #else
-                                            constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_mo
-del, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
+                                            constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
 #endif
                                             obbt_model->reset_lazy();
                                             obbt_model->reindex();
@@ -6785,13 +6784,15 @@ del, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
                                     }
 #ifdef USE_MPI
                                             }
+                                    
 #endif
                                 }
 
 #ifdef USE_MPI
-                                if(linearize && worker_id==0)
-                                {
+                                 MPI_Bcast(&lower_bound, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+                                 gap=100*(upper_bound - lower_bound)/std::abs(upper_bound);
 #endif
+                                
                                 if (std::abs(upper_bound- lower_bound)<=abs_tol && ((upper_bound- lower_bound))/(std::abs(upper_bound)+zero_tol)<=rel_tol)
                                 {
                                     DebugOff("Gap closed at iter "<< iter<<endl);
@@ -6808,9 +6809,7 @@ del, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
                                         obbt_model->print_solution();
 #endif
                                 }
-#ifdef USE_MPI
-                                        }
-#endif
+
                                 if(linearize){
                                     DebugOff("Number of constraints "<<obbt_model->_nb_cons<<endl);
                                     DebugOff("Number of symbolic constraints "<<obbt_model->_cons_name.size()<<endl);
