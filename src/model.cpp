@@ -6534,7 +6534,12 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
                                                         if(worker_id==0){
                                                             DebugOn("calling cuts_mpi "<<obbt_subproblem_count<<endl);
                                                         }
-                                                        viol=relaxed_model->cuts_parallel(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
+                                                        auto nb_workers_ = std::min((size_t)nb_workers, objective_models.size());
+                                                            /* Split models into equal loads */
+                                                            std::vector<size_t> limits = bounds(nb_workers_, objective_models.size());
+                                                        if(worker_id+1<limits.size){
+                                                        viol=relaxed_model->cuts_parallel(batch_models, limits[worker_id+1]-limits[worker_id], interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
+                                                        }
 
                                                         
 #else
