@@ -6207,7 +6207,7 @@ namespace gravity {
                                 //  constr_viol=relaxed_model->add_iterative(interior_model, obbt_solution, obbt_model, "allvar", oacuts, active_root_tol);
                                 
 #ifdef USE_MPI
-                                constr_viol=relaxed_model->cuts_MPI(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, o_status, "allvar");
+constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
 #else
                                 constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
 #endif
@@ -6534,8 +6534,8 @@ namespace gravity {
                                                         if(worker_id==0){
                                                             DebugOn("calling cuts_mpi "<<obbt_subproblem_count<<endl);
                                                         }
-                                                        
-                                                        viol=relaxed_model->cuts_parallel(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, sol_status, cut_type, objective_models, repeat_list);
+                                                        viol=relaxed_model->cuts_parallel(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
+
                                                         
 #else
                                                         viol=relaxed_model->cuts_parallel(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
@@ -6731,9 +6731,10 @@ namespace gravity {
                                             o_models.push_back(obbt_model);
                                             // constr_viol=relaxed_model->add_iterative(interior_model, obbt_solution, obbt_model, "allvar", oacuts, active_root_tol);
 #ifdef USE_MPI
-                                            constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, o_status, "allvar");
+constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
 #else
-                                            constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
+                                            constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_mo
+del, obbt_model, oacuts, lb_solver_tol, run_obbt_iter, range_tol, "allvar");
 #endif
                                             obbt_model->reset_lazy();
                                             obbt_model->reindex();
@@ -6783,7 +6784,6 @@ namespace gravity {
                                         break;
                                     }
 #ifdef USE_MPI
-                                        if(linearize && worker_id==0)
                                             }
 #endif
                                 }
@@ -6809,7 +6809,6 @@ namespace gravity {
 #endif
                                 }
 #ifdef USE_MPI
-                                    if(linearize && worker_id==0)
                                         }
 #endif
                                 if(linearize){
