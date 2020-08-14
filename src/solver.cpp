@@ -1685,6 +1685,10 @@ namespace gravity {
         std::vector<double> obbt_solution, cut_vec;
         string msname;
         int viol=0, viol_i=0;
+        int worker_id, nb_workers;                            
+        auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
+        auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
+	DebugOn(endl<<endl<<"wid "<<worker_id<<"bmc "<<batch_model_count<<endl);
         for (auto s=0;s<batch_model_count;s++)
         {
             auto m=batch_models[s];
