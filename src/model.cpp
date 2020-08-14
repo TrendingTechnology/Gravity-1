@@ -6099,6 +6099,8 @@ namespace gravity {
         DebugOff("I will be splitting " << nb_total_threads << " tasks ");
         DebugOff("among " << nb_workers << " worker(s)" << endl);
         DebugOff("limits size intial = " << limits.size() << endl);
+        vector<int> viol_array;
+        viol_array.resize(0, nb_workers);
 #endif
         vector<shared_ptr<Model<>>> batch_models;
         batch_models.reserve(nb_threads);
@@ -6537,9 +6539,21 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
                                                         auto nb_workers_ = std::min((size_t)nb_workers, objective_models.size());
                                                             /* Split models into equal loads */
                                                             std::vector<size_t> limits = bounds(nb_workers_, objective_models.size());
+                                                        viol_array.resize(0,nb_workers);
                                                         if(worker_id+1<limits.size){
-                                                        viol=relaxed_model->cuts_parallel(batch_models, limits[worker_id+1]-limits[worker_id], interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
+                                                        auto violi=relaxed_model->cuts_parallel(batch_models, limits[worker_id+1]-limits[worker_id], interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
+                                                            viol_array[worker_id]=violi;
                                                         }
+                                                        for (auto w_id = 0; w_id<nb_workers; w_id++) {
+                                                                MPI_Bcast(&viol_array[w_id], 1, MPI_INT, w_id, MPI_COMM_WORLD);
+                                                            }
+                                                        viol=0;
+                                                        for(auto &v:viol_array){
+                                                            if(v==1){
+                                                                viol=1;
+                                                                break;
+                                                            }
+                                                    }
 
                                                         
 #else
