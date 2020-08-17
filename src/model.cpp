@@ -6359,19 +6359,7 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
 #else
                                                 DebugOn("obbt subproblem count "<<obbt_subproblem_count<<endl);
 #endif
-                                                viol=1;
-                                                lin_count=0;
-                                                while((viol==1) && (lin_count<5)){
-                                                    if(lin_count>=1){
-#ifdef USE_MPI
-                                                        if(worker_id==0){
-                                                            DebugOn("resolving "<<obbt_subproblem_count<<endl);
-                                                        }
-#else
-                                                        DebugOn("resolving"<<endl);
-                                                        obbt_subproblem_count+=batch_model_count;
-#endif
-                                                    }
+                                               
                                                     double batch_time_start = get_wall_time();
                                                     sol_status.resize(batch_model_count,-1);
                                                     sol_obj.resize(batch_model_count,-1.0);
@@ -6525,6 +6513,31 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
                                                         }
                                                         model_id++;
                                                     }
+                                                viol=1;
+                                                lin_count=0;
+                                                while((viol==1) && (lin_count<5)){
+                                                    if(lin_count>=1){
+                                                        auto vec = vector<shared_ptr<gravity::Model<double>>>();
+                                                        
+                                                        
+#ifdef USE_MPI
+                                                        auto vec_size=limits[worker_id+1]-limits[worker_id];
+                                                        if(worker_id==0){
+                                                            DebugOn("resolving "<<obbt_subproblem_count<<endl);
+                                                        }
+                                                        
+                                                        
+#else
+                                                        auto vec_size=batch_model_count;
+                                                        DebugOn("resolving"<<endl);
+                                                        
+                                                        
+#endif
+                                                        for(auto s=0;s<vec_size;s++){
+                                                            vec.push_back(batch_models.at(s));
+                                                        }
+                                                        run_parallel(vec, lb_solver_type, obbt_subproblem_tol, nb_threads, 2000);
+                                                    }
                                                     if(linearize){
                                                         if(run_obbt_iter<=2){
                                                             cut_type="modelname";
@@ -6595,6 +6608,11 @@ viol_array[worker_id]=0;
                                                         mod->reset_lifted_vars_bounds();
                                                     }
                                                     
+                                                    if(!linearize){
+                                                        break;
+                                                    }
+                                                    lin_count++;
+                                                }
                                                     sol_status.clear();
                                                     sol_obj.clear();
                                                     auto t=get_wall_time()-solver_time_start;
@@ -6602,10 +6620,7 @@ viol_array[worker_id]=0;
                                                     DebugOn(endl<<endl<<"wid "<<worker_id<<" Batch "<<batch_time<<" cuts "<<oacuts<<" time "<<t<<endl);
 #else
                                                     DebugOn("Batch time "<<batch_time<<" nb oa cuts "<<oacuts<<" solver time "<<t<<endl);
-#endif  
-                                                    if(!linearize){
-                                                        break;
-                                                    }
+#endif
                                                     //                                                    if(linearize){
                                                     //                                                         if(!(next(it)==obbt_model->_vars_name.end() && next(it_key)==v.get_keys()->end() && dir=="UB")){
                                                     //                                                        break;
@@ -6616,8 +6631,7 @@ viol_array[worker_id]=0;
                                                     //                                                    }
                                                     //                                                    }
                                                     //                                                    }
-                                                    lin_count++;
-                                                }
+                                                   
 #ifdef USE_MPI
                                                 MPI_Barrier(MPI_COMM_WORLD);
 #endif
