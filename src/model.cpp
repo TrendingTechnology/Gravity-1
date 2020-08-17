@@ -6352,6 +6352,10 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
                                                 if(worker_id==0){
                                                     DebugOn("obbt subproblem count "<<obbt_subproblem_count<<endl);
                                                 }
+                                                auto t1=get_wall_time();
+                                                MPI_Barrier(MPI_COMM_WORLD);
+                                                auto t2=get_wall_time();
+                                                DebugOn(endl<<endl<<"wid "<<worker_id<<" Mbarrier time "<<(t2-t1)<<endl);
 #else
                                                 DebugOn("obbt subproblem count "<<obbt_subproblem_count<<endl);
 #endif
@@ -6372,10 +6376,7 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
                                                     sol_status.resize(batch_model_count,-1);
                                                     sol_obj.resize(batch_model_count,-1.0);
 #ifdef USE_MPI
-                                                    auto t1=get_wall_time();
-                                                    MPI_Barrier(MPI_COMM_WORLD);
-                                                    auto t2=get_wall_time();
-                                                    DebugOn(endl<<endl<<"wid "<<worker_id<<" Mbarrier time "<<(t2-t1)<<endl);
+                                                
                                                     batch_time_start = get_wall_time();
                                                     
                                                     run_MPI_new(objective_models, sol_obj, sol_status,batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads,"ma27",2000,2000, share_obj);
@@ -6540,22 +6541,24 @@ constr_viol=relaxed_model->cuts_parallel(o_models, 1, interior_model, obbt_model
                                                             /* Split models into equal loads */
                                                             std::vector<size_t> limits = bounds(nb_workers_, objective_models.size());
 viol_array[worker_id]=0;
+                                                        viol=0;
                                                         if(worker_id+1<limits.size()){
                                                         auto violi=relaxed_model->cuts_parallel(batch_models, limits[worker_id+1]-limits[worker_id], interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
                                                             viol_array[worker_id]=violi;
+                                                            viol=violi;
                                                         }
-DebugOn("broadcasting viol array"<<endl);
-                                                        for (auto w_id = 0; w_id<nb_workers; w_id++) {
-                                                                MPI_Bcast(&viol_array[w_id], 1, MPI_INT, w_id, MPI_COMM_WORLD);
-                                                            }
-                                                        viol=0;
-                                                        for(auto &v:viol_array){
-DebugOn(v<<endl);                                                            
-if(v==1){
-                                                                viol=1;
-                                                                break;
-                                                            }
-                                                    }
+//DebugOn("broadcasting viol array"<<endl);
+//                                                        for (auto w_id = 0; w_id<nb_workers; w_id++) {
+//                                                                MPI_Bcast(&viol_array[w_id], 1, MPI_INT, w_id, MPI_COMM_WORLD);
+//                                                            }
+//                                                        viol=0;
+//                                                        for(auto &v:viol_array){
+//DebugOn(v<<endl);
+//if(v==1){
+//                                                                viol=1;
+//                                                                break;
+//                                                            }
+//                                                    }
 
                                                         
 #else
@@ -6615,6 +6618,9 @@ if(v==1){
                                                     //                                                    }
                                                     lin_count++;
                                                 }
+#ifdef USE_MPI
+                                                MPI_Barrier(MPI_COMM_WORLD);
+#endif
                                                 // DebugOn("Repeat_list "<<repeat_list.size()<<endl);
                                                 repeat_list.clear();
                                                 objective_models.clear();
