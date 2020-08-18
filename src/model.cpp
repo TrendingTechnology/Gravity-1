@@ -5979,7 +5979,6 @@ namespace gravity {
         UB_solver.run(output = 0, ub_solver_tol, "ma27");
         ub_scale_value=this->get_obj_val();
         solver<> LBnonlin_solver(relaxed_model,ub_solver_type);
-        scale_objective=true;
         if(scale_objective){
             auto obj = *relaxed_model->_obj/ub_scale_value;
             relaxed_model->min(obj);

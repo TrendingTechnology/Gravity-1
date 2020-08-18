@@ -322,6 +322,12 @@ namespace gravity {
 #ifdef USE_MPI
        DebugOn(endl<<endl<<"wid "<<worker_id<<" ipopt solve time " << t2-t1<<endl<<endl);
 #endif
+         for (size_t i = 0; i < nr_threads_; ++i) {
+             auto st=models[i]->has_violated_constraints(tol);
+             if(st.second){
+                 DebugOn("viol status ");
+             }
+         }
         return 0;
     }
     
