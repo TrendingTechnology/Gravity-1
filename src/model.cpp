@@ -6463,8 +6463,9 @@ namespace gravity {
                                                                     mod->add(*con);
                                                                 }
                                                             }
-                                                            mod->reset();
+                                                         //   mod->reset();
                                                         }
+							mod->reset();
                                                         mod->reset_constrs();
                                                         mod->reset_lifted_vars_bounds();
                                                     }
@@ -6477,9 +6478,9 @@ namespace gravity {
                                                 auto model_count=0;
                                                 int model_id = 0;
 #ifdef USE_MPI
-                                                send_status_new(models,limits, sol_status);
-                                                MPI_Barrier(MPI_COMM_WORLD);
-                                                send_obj_all_new(models,limits, sol_obj);
+                                                send_status_new(batch_models,limits, sol_status);
+                                                send_obj_all_new(batch_models,limits, sol_obj);
+						MPI_Barrier(MPI_COMM_WORLD);
                                                 if(worker_id==0){
                                                     DebugOn("time before bounds update "<<get_wall_time()-solver_time_start<<endl);
                                                 }
@@ -6640,7 +6641,7 @@ namespace gravity {
                                                 MPI_Barrier(MPI_COMM_WORLD);
 #endif
                                                 for(auto &mod:batch_models){
-                                                    if(linearize){
+                                                    if(linearize||true){
                                                         mod->reset();
                                                     }
                                                     mod->reset_constrs();
@@ -6687,6 +6688,8 @@ namespace gravity {
                                     obbt_model->reset();
                                     obbt_model->reindex();
                                 }
+				obbt_model->reset();                                     
+                                obbt_model->reindex(); 
                                 obbt_model->reset_constrs();
                                 obbt_model->reset_lifted_vars_bounds();
                                 if(!linearize){
