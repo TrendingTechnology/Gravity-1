@@ -6124,7 +6124,7 @@ namespace gravity {
         bool break_flag=false, time_limit = false, close=false;
         bool xb_true=true;
         double sum=0, avg=0, num_var=0.0;
-        const double fixed_tol_abs=1e-3, fixed_tol_rel=1e-3, zero_tol=1e-6, obbt_subproblem_tol=1e-6, gap_tol=0.1;
+        const double fixed_tol_abs=1e-3, fixed_tol_rel=1e-3, zero_tol=1e-6, obbt_subproblem_tol=1e-8, gap_tol=0.1;
         int gap_count_int=1, iter=0;
         int output = 0;
         int batch_model_count=0, lin_count;
@@ -6133,7 +6133,7 @@ namespace gravity {
         shared_ptr<map<string,size_t>> p_map;
         vector<double> obbt_solution(relaxed_model->_nb_vars);
         double lower_bound_nonlin_init = numeric_limits<double>::min(), lower_bound_init = numeric_limits<double>::min(), upper_bound = 0, lower_bound = numeric_limits<double>::min();
-        int obbt_subproblem_count=0;
+        int obbt_subproblem_count=0,vec_size;
         double active_root_tol=1e-6, active_tol=1e-6;
         double gap_old;
         bool share_obj;
@@ -6167,13 +6167,13 @@ namespace gravity {
                     share_obj=true;
                     if(linearize){
                         if(run_obbt_iter==1){
-                            active_tol=1e-6;
+                            active_tol=obbt_subproblem_tol;
                         }
                         else if(run_obbt_iter<=3){
-                            active_tol=1e-6;
+                            active_tol=obbt_subproblem_tol;
                         }
                         else{
-                            active_tol=1e-6;
+                            active_tol=obbt_subproblem_tol;
                         }
                         DebugOff("Number of obbt subproblems "<<relaxed_model->num_obbt_prob()<<endl);
                         DebugOff("Initial constraints after add_outer_app_solution "<<oacuts<<endl);
@@ -6206,6 +6206,10 @@ namespace gravity {
                                     DebugOn("oa cuts = "<<oacuts<<endl);
                                 }
 #endif
+   auto st=obbt_model->has_violated_constraints(lb_solver_tol);                    
+                                if(st.second){                                                        
+                                        DebugOn("viol status LB");                                    
+                                }
                                 //  constr_viol=relaxed_model->add_iterative(interior_model, obbt_solution, obbt_model, "allvar", oacuts, active_root_tol);
                                 
 #ifdef USE_MPI
@@ -6238,6 +6242,7 @@ namespace gravity {
                             DebugOn("Gap initial "<<gaplin<<" and cuts initial "<<oacuts<<" and cuts buildoa "<<oacuts_init<<endl);
 #endif
                             oacuts_init=oacuts;
+			    obbt_model->scale_coefs(1e3);
                         }
                     }
                     int count_var=0;
@@ -6355,7 +6360,7 @@ namespace gravity {
                                                 auto t1=get_wall_time();
                                                 MPI_Barrier(MPI_COMM_WORLD);
                                                 auto t2=get_wall_time();
-                                                DebugOn(endl<<endl<<"wid "<<worker_id<<" Mbarrier time "<<(t2-t1)<<endl);
+                                                //DebugOn(endl<<endl<<"wid "<<worker_id<<" Mbarrier time "<<(t2-t1)<<endl);
 #else
                                                 DebugOn("obbt subproblem count "<<obbt_subproblem_count<<endl);
 #endif
@@ -6385,18 +6390,24 @@ namespace gravity {
                                                         
                                                         
 #ifdef USE_MPI
-                                                        auto vec_size=limits[worker_id+1]-limits[worker_id];
+                                                         if(worker_id+1<limits.size()){
+                                                        vec_size=limits[worker_id+1]-limits[worker_id];
+                                                        }
+                                                        else{
+                                                            vec_size=0;
+                                                        }
                                                         
                                                         DebugOn(endl<<endl<<"wid "<<worker_id<<" resolving "<<obbt_subproblem_count<<endl);
                                                         
                                                         
                                                         
 #else
-                                                        auto vec_size=batch_model_count;
+                                                        vec_size=batch_model_count;
                                                         DebugOn("resolving"<<endl);
                                                         
                                                         
 #endif
+DebugOn("vec size "<<vec_size<<endl);
                                                         for(auto s=0;s<vec_size;s++){
                                                             vec.push_back(batch_models.at(s));
                                                         }
@@ -6469,6 +6480,9 @@ namespace gravity {
 							mod->reset();
                                                         mod->reset_constrs();
                                                         mod->reset_lifted_vars_bounds();
+							mod->reindex();
+							mod->_obj->uneval();
+							mod->_obj->eval_all();
                                                     }
                                                     
                                                     if(!linearize){
@@ -6479,13 +6493,27 @@ namespace gravity {
                                                 auto model_count=0;
                                                 int model_id = 0;
 #ifdef USE_MPI
-                                                send_status_new(batch_models,limits, sol_status);
+                                                
+						send_status_new(batch_models,limits, sol_status);
                                                 send_obj_all_new(batch_models,limits, sol_obj);
 						MPI_Barrier(MPI_COMM_WORLD);
-                                                if(worker_id==0){
+ 						for(auto k=0;k<sol_status.size();k++){
+                                                DebugOn(objective_models[k]<<" "<<sol_status[k]<<" "<<sol_obj[k]<<endl);
+                                                }                                                
+if(worker_id==0){
                                                     DebugOn("time before bounds update "<<get_wall_time()-solver_time_start<<endl);
                                                 }
+#else
+ 						int mcount=0;
+                                                for(auto &m:batch_models){
+                                                    if(mcount<objective_models.size()){
+                                                        sol_status.at(mcount)=m->_status;
+                                                        sol_obj.at(mcount)=m->get_obj_val();
+                                                        mcount++;
+                                                    }
+                                                }
 #endif
+
                                                 
                                                 for (auto s=0;s<batch_model_count;s++)
                                                 {
@@ -6623,7 +6651,7 @@ namespace gravity {
                                                 sol_obj.clear();
                                                 auto t=get_wall_time()-solver_time_start;
 #ifdef USE_MPI                                                                                          
-                                                DebugOn(endl<<endl<<"wid "<<worker_id<<" Batch "<<batch_time<<" cuts "<<oacuts<<" time "<<t<<endl);
+                                                DebugOn("Batch "<<batch_time<<" cuts "<<oacuts<<" time "<<t<<endl);
 #else
                                                 DebugOn("Batch time "<<batch_time<<" nb oa cuts "<<oacuts<<" solver time "<<t<<endl);
 #endif
@@ -6766,6 +6794,10 @@ namespace gravity {
                                                 LB_solver.set_option("gurobi_crossover", true);
                                             }
                                             LB_solver.run(output = 0, lb_solver_tol, "ma27");
+					    auto st=obbt_model->has_violated_constraints(lb_solver_tol);
+                                if(st.second){
+                                        DebugOn("viol status LB");
+                                }
                                             if(obbt_model->_status==0){
                                                 lower_bound=obbt_model->get_obj_val()*upper_bound/ub_scale_value;
                                                 gap=(upper_bound-lower_bound)/std::abs(upper_bound)*100;
