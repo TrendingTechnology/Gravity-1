@@ -320,12 +320,13 @@ namespace gravity {
         }
         t2=get_wall_time();
 #ifdef USE_MPI
-       DebugOn(endl<<endl<<"wid "<<worker_id<<" ipopt solve time " << t2-t1<<endl<<endl);
+       DebugOff(endl<<endl<<"wid "<<worker_id<<" ipopt solve time " << t2-t1<<endl<<endl);
 #endif
-         for (size_t i = 0; i < nr_threads_; ++i) {
+	   for (size_t i = 0; i < nr_threads_; ++i) {
              auto st=models[i]->has_violated_constraints(tol);
              if(st.second){
-                 DebugOn("viol status ");
+                 DebugOn("viol status "<<endl);
+		 models[i]->_status=-1;
              }
          }
         return 0;
@@ -532,7 +533,7 @@ namespace gravity {
                             violated=true;
 #ifdef USE_MPI
                             if(worker_id==0)
-                                DebugOn("avoided fcut"<<endl);
+                                DebugOff("avoided fcut"<<endl);
 #endif
                             return violated;
                         }
@@ -1268,7 +1269,7 @@ namespace gravity {
                                             else{
 #ifdef USE_MPI
                                                 if(worker_id==0)
-                                                    DebugOn("avoided xcut "<<endl);
+                                                    DebugOff("avoided xcut "<<endl);
 #endif
                                             }
                                             
@@ -1932,17 +1933,27 @@ for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
                     models[count]->reindex();
                     vec.push_back(models[count++]);
                 }
+<<<<<<< HEAD
 //t2=get_wall_time();
 //DebugOn(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
 //t1=get_wall_time();
                 run_parallel(vec,stype,tol,nr_threads,lin_solver,max_iter);
 //t2=get_wall_time();
 //DebugOn(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);
+=======
+t2=get_wall_time();
+DebugOff(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
+t1=get_wall_time(); 
+                run_parallel(vec,stype,tol,nr_threads,lin_solver,max_iter);
+t2=get_wall_time();  
+DebugOff(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);          
+>>>>>>> 58e3a827f0f60729d20312b6c437b187517c7d00
 }
 //t1=get_wall_time(); 
   //          MPI_Barrier(MPI_COMM_WORLD);
     //        t2=get_wall_time();
 //DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier1 time "<<(t2-t1)<<endl);
+<<<<<<< HEAD
 //            t1=get_wall_time();
 //            send_status_new(models,limits, sol_status);
 //            t2=get_wall_time();
@@ -1963,6 +1974,28 @@ for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
 //        MPI_Barrier(MPI_COMM_WORLD);
 //        t2=get_wall_time();
 //        DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier3 time "<<(t2-t1)<<endl);
+=======
+            //t1=get_wall_time();
+	    //send_status_new(models,limits, sol_status);
+            //t2=get_wall_time();
+            //DebugOn(endl<<endl<<"wid "<<worker_id<<" send status "<<(t2-t1)<<endl);
+            //t1=get_wall_time();
+	   // MPI_Barrier(MPI_COMM_WORLD);
+	    //t2=get_wall_time();                                                                      
+            DebugOff(endl<<endl<<"wid "<<worker_id<<"barrier2 time "<<(t2-t1)<<endl);        
+            //if(share_all_obj){
+                /* We will send the objective value of successful models */
+                //t1=get_wall_time();
+                //send_obj_all_new(models,limits, sol_obj);
+                //t2=get_wall_time();
+                //DebugOn(endl<<endl<<"wid "<<worker_id<<" send obj "<<(t2-t1)<<endl);
+            //}
+        }
+	t1=get_wall_time();
+        MPI_Barrier(MPI_COMM_WORLD);
+	t2=get_wall_time();
+        DebugOff(endl<<endl<<"wid "<<worker_id<<"barrier3 time "<<(t2-t1)<<endl); 
+>>>>>>> 58e3a827f0f60729d20312b6c437b187517c7d00
         return max(err_rank, err_size);
         
     }

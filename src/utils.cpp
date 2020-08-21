@@ -254,32 +254,65 @@ std::vector<size_t> bounds(unsigned parts, size_t mem) {
     return bnd;
 }
 
-/*Split "mem" into "parts", e.g. if mem = 10 and parts = 4 you will have: 0,2,4,6,10, i.e., [0,3], [3,6], [6], [6,8], [810] if possible the function will split mem into equal chuncks, if not the first few chunks will be larger by 1. Try to */
-std::vector<size_t> bounds_reassign(unsigned parts, size_t mem, vector<string> objective_models, map<string,int>& old_map) {
+/*Split "mem" into "parts", e.g. if mem = 10 and parts = 4 you will have: 0,2,4,6,10, i.e., [0,3], [3,6], [6], [6,8], [810] if possible the function will split mem into equal chuncks, if not the first few chunks will be larger by 1. Try to assign each mem back to the part it was assigned before*/
+std::vector<size_t> bounds_reassign(unsigned parts, size_t mem, vector<string>& objective_models, map<string,int>& old_map, int nb_threads) {
     std::vector<size_t>bnd;
+    std::vector<std::string> unassign, new_objective_models;
     unsigned new_parts = parts;
     if(parts>mem){
         DebugOff("In function std::vector<size_t> bounds(unsigned parts, size_t mem), parts cannot be strictly greater than mem");
         new_parts = mem;
     }
-    
-    
-    
-    size_t delta = mem / new_parts;
-    size_t reminder = mem % new_parts;
-    size_t N1 = 0, N2 = 0;
-    bnd.push_back(N1);
-    for (size_t i = 0; i < new_parts; ++i) {
-        N2 = N1 + delta;
-        if(i<reminder)
-            N2+=1;
-        //        if (i == new_parts - 1)
-        //            N2 += reminder;
-        bnd.push_back(N2);
-        N1 = N2;
+    for (auto i=0;i<=new_parts;i++){
+        bnd.push_back(0);
     }
+    
+    int wid;
+    for(auto &s:objective_models){
+        if(old_map.find(s)!=old_map.end()){
+            wid=old_map.at(s);
+            if(wid+1<bnd.size()){
+            if(bnd[wid+1] < nb_threads){
+                bnd[wid+1]++;
+            }
+            else{
+                unassign.push_back(s);
+            }
+            }
+            else{
+                unassign.push_back(s);
+            }
+        }
+        else{
+        unassign.push_back(s);
+        }
+    }
+    wid=0;
+    for(auto u=unassign.begin();u<unassign.end();u++){
+            if(bnd[wid+1] < nb_threads){
+            old_map[*u]=wid;
+            bnd[wid+1]++;
+        }
+            else{
+                wid++;
+                u--;
+               // bnd[wid+1]=bnd[wid];
+            }
+    }
+
+    for(auto w=bnd.begin();w<bnd.end()-1;w++){
+        for(auto it=objective_models.begin();it!=objective_models.end();it++){
+            if(old_map[*it]==(w - bnd.begin())){
+                new_objective_models.push_back(*it);
+            }
+        }
+    }
+     for(auto w=bnd.begin()+1;w<bnd.end();w++){
+         *w=*w+*(w-1);
+     }
     //    for(size_t i=1;i<=reminder;++i)
     //        bnd.at(i)+=1;
+    objective_models=new_objective_models;
     if(bnd.back()!=mem){
         DebugOn("Error in computing limits");
     }

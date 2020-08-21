@@ -48,6 +48,8 @@ op::OptionParser readOptions(int argc, char * argv[]);
 //the last chunck will be slightly larger
 std::vector<size_t> bounds(unsigned parts, size_t mem);
 
+std::vector<size_t> bounds_reassign(unsigned parts, size_t mem, std::vector<std::string>& objective_models, std::map<std::string,int>& old_map, int nb_threads);
+
 
 gravity::Sign reverse(gravity::Sign s);
 
