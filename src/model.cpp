@@ -6167,10 +6167,10 @@ namespace gravity {
                     share_obj=true;
                     if(linearize){
                         if(run_obbt_iter==1){
-                            active_tol=obbt_subproblem_tol;
+                            active_tol=0.1;
                         }
                         else if(run_obbt_iter<=3){
-                            active_tol=obbt_subproblem_tol;
+                            active_tol=0.1;
                         }
                         else{
                             active_tol=obbt_subproblem_tol;
@@ -6709,10 +6709,7 @@ if(worker_id==0){
                                 //                    obbt_model = new_obbt.copy();
                                 if(linearize){
                                     if(run_obbt_iter>=1 && active_tol>lb_solver_tol){
-                                        // active_tol*=0.1;
-                                    }
-                                    else if(run_obbt_iter>1 && (active_tol>=lb_solver_tol*0.1)){
-                                        //active_tol*=0.1;
+                                         active_tol*=0.1;
                                     }
                                     obbt_model->reset();
                                     obbt_model->reindex();
@@ -6913,15 +6910,15 @@ if(worker_id==0){
                             }
                             solver_time= get_wall_time()-solver_time_start;
                             DebugOff("Solved Fixed Point iteration " << iter << endl);
-                            //                            if(linearize && (gap_old-gap<0.1) && run_obbt_iter<=3){
-                            //#ifdef USE_MPI
-                            //                                if(worker_id==0){
-                            //                                    DebugOn("breaking "<<gap_old<<" "<<gap<<" "<<gap_tol<<endl);
-                            //                                }
-                            //#endif
-                            //                                break;
-                            //                            }
-                            //                            gap_old=gap;
+                                                        if(linearize && (gap_old-gap<0.1) && run_obbt_iter<=3){
+                            #ifdef USE_MPI
+                                                            if(worker_id==0){
+                                                                DebugOn("breaking "<<gap_old<<" "<<gap<<" "<<gap_tol<<endl);
+                                                            }
+                            #endif
+                                                           break;
+                                                        }
+                                                        gap_old=gap;
                         }
                         vector<double> interval_gap;
                         
