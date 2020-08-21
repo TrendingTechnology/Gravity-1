@@ -546,7 +546,7 @@ namespace gravity {
     template<>
     Model<> Model<>::add_outer_app_solution(Model<>& nonlin)
     {
-        const double active_tol=1e-6,active_tol_sol=1e-12, perturb_dist=1e-1, zero_tol=1e-6;
+        const double active_tol=1e-6,active_tol_sol=1e-14, perturb_dist=1e-1, zero_tol=1e-6;
         vector<double> xactive, xcurrent, xinterior, xres, xtest;
         bool interior=false;
         double fk, fkk;
@@ -896,7 +896,7 @@ namespace gravity {
         vector<double> xcurrent, xres;
         get_solution(xsolution);
         set_solution(obbt_solution);
-        const double active_tol_sol=1e-12, zero_tol=1e-6;
+        const double active_tol_sol=1e-14, zero_tol=1e-6;
         bool constr_viol=false;
         bool interior_solv=true;
         vector<double> c_val ;
@@ -1160,7 +1160,7 @@ namespace gravity {
 #endif
         get_solution(xsolution);
         set_solution(obbt_solution);
-        const double active_tol_sol=1e-12, zero_tol=1e-6;
+        const double active_tol_sol=1e-14, zero_tol=1e-6;
         int constr_viol=0;
         bool interior_solv=true;
         vector<double> c_val ;
@@ -1712,6 +1712,7 @@ namespace gravity {
                 cut_vec.resize(0);
                 viol_i=generate_cuts_iterative(interior_model, obbt_solution, lin, msname, oacuts, active_tol, cut_vec);
                 lin->add_cuts_to_model(cut_vec, *this);
+                m->set_solution(obbt_solution);
                 if(viol_i==1){
                     repeat_list.push_back(m->_name);
                 }
@@ -1931,37 +1932,37 @@ for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
                     models[count]->reindex();
                     vec.push_back(models[count++]);
                 }
-t2=get_wall_time();
-DebugOn(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
-t1=get_wall_time(); 
+//t2=get_wall_time();
+//DebugOn(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
+//t1=get_wall_time();
                 run_parallel(vec,stype,tol,nr_threads,lin_solver,max_iter);
-t2=get_wall_time();  
-DebugOn(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);          
+//t2=get_wall_time();
+//DebugOn(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);
 }
 //t1=get_wall_time(); 
   //          MPI_Barrier(MPI_COMM_WORLD);
     //        t2=get_wall_time();
 //DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier1 time "<<(t2-t1)<<endl);
-            t1=get_wall_time();
-	    send_status_new(models,limits, sol_status);
-            t2=get_wall_time();
-            DebugOn(endl<<endl<<"wid "<<worker_id<<" send status "<<(t2-t1)<<endl);
-            t1=get_wall_time();
-	    MPI_Barrier(MPI_COMM_WORLD);
-	    t2=get_wall_time();                                                                      
-            DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier2 time "<<(t2-t1)<<endl);        
-            if(share_all_obj){
-                /* We will send the objective value of successful models */
-                t1=get_wall_time();
-                send_obj_all_new(models,limits, sol_obj);
-                t2=get_wall_time();
-                DebugOn(endl<<endl<<"wid "<<worker_id<<" send obj "<<(t2-t1)<<endl);
-            }
-        }
-	t1=get_wall_time();
-        MPI_Barrier(MPI_COMM_WORLD);
-	t2=get_wall_time();
-        DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier3 time "<<(t2-t1)<<endl); 
+//            t1=get_wall_time();
+//            send_status_new(models,limits, sol_status);
+//            t2=get_wall_time();
+//            DebugOn(endl<<endl<<"wid "<<worker_id<<" send status "<<(t2-t1)<<endl);
+//            t1=get_wall_time();
+//            MPI_Barrier(MPI_COMM_WORLD);
+//            t2=get_wall_time();
+//            DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier2 time "<<(t2-t1)<<endl);
+//            if(share_all_obj){
+//                /* We will send the objective value of successful models */
+//                t1=get_wall_time();
+//                send_obj_all_new(models,limits, sol_obj);
+//                t2=get_wall_time();
+//                DebugOn(endl<<endl<<"wid "<<worker_id<<" send obj "<<(t2-t1)<<endl);
+//            }
+}
+//        t1=get_wall_time();
+//        MPI_Barrier(MPI_COMM_WORLD);
+//        t2=get_wall_time();
+//        DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier3 time "<<(t2-t1)<<endl);
         return max(err_rank, err_size);
         
     }

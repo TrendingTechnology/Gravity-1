@@ -1922,7 +1922,7 @@ namespace gravity {
             vector<double> xk, xsolution;
             double xvk, xvk1, fk, dfdvk, ub,lb;
             const int max_iter=10000;
-            const double active_tol=1e-12,zero_tol=1e-12;
+            const double active_tol=1e-14,zero_tol=1e-12;
             size_t posvk;
             
             int counter=0,iter=0;

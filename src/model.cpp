@@ -6125,7 +6125,7 @@ namespace gravity {
         double sum=0, avg=0, num_var=0.0;
         const double fixed_tol_abs=1e-3, fixed_tol_rel=1e-3, zero_tol=1e-6, obbt_subproblem_tol=1e-6, gap_tol=0.1;
         int gap_count_int=1, iter=0;
-        int output = 0;
+        int output = 0, vec_size;
         int batch_model_count=0, lin_count;
         double solver_time =0, solver_time_end, gapnl,gap, solver_time_start = get_wall_time();
         vector<double> ub_sol;
@@ -6384,14 +6384,19 @@ namespace gravity {
                                                         
                                                         
 #ifdef USE_MPI
-                                                        auto vec_size=limits[worker_id+1]-limits[worker_id];
+                                                        if(worker_id+1<limits.size()){
+                                                        vec_size=limits[worker_id+1]-limits[worker_id];
+                                                        }
+                                                        else{
+                                                            vec_size=0;
+                                                        }
                                                         
                                                         DebugOn(endl<<endl<<"wid "<<worker_id<<" resolving "<<obbt_subproblem_count<<endl);
                                                         
                                                         
                                                         
 #else
-                                                        auto vec_size=batch_model_count;
+                                                        vec_size=batch_model_count;
                                                         DebugOn("resolving"<<endl);
                                                         
                                                         
@@ -6400,6 +6405,7 @@ namespace gravity {
                                                             vec.push_back(batch_models.at(s));
                                                         }
                                                         run_parallel(vec, lb_solver_type, obbt_subproblem_tol, nb_threads, 2000);
+                                                        DebugOn("good"<<endl);
                                                     }
                                                     if(linearize){
                                                         if(run_obbt_iter<=2){
@@ -6465,9 +6471,11 @@ namespace gravity {
                                                             }
                                                          //   mod->reset();
                                                         }
-							mod->reset();
+                                                        mod->reset();
                                                         mod->reset_constrs();
                                                         mod->reset_lifted_vars_bounds();
+                                                        mod->reindex();
+                                                        mod->_obj->eval_all();
                                                     }
                                                     
                                                     if(!linearize){
@@ -6480,12 +6488,23 @@ namespace gravity {
 #ifdef USE_MPI
                                                 send_status_new(batch_models,limits, sol_status);
                                                 send_obj_all_new(batch_models,limits, sol_obj);
-						MPI_Barrier(MPI_COMM_WORLD);
+                                                MPI_Barrier(MPI_COMM_WORLD);
                                                 if(worker_id==0){
                                                     DebugOn("time before bounds update "<<get_wall_time()-solver_time_start<<endl);
                                                 }
+#else
+                                                int mcount=0;
+                                                for(auto &m:batch_models){
+                                                    if(mcount<objective_models.size()){
+                                                        sol_status.at(mcount)=m->_status;
+                                                        sol_obj.at(mcount)=m->get_obj_val();
+                                                        mcount++;
+                                                    }
+                                                }
 #endif
-                                                
+                                                for (auto k=0;k<sol_status.size();k++){
+                                                    DebugOn(objective_models[k]<<" "<<sol_status[k]<<" "<<sol_obj[k]<<endl);
+                                                }
                                                 for (auto s=0;s<batch_model_count;s++)
                                                 {
                                                     /* Update bounds only if the model status is solved to optimal */
