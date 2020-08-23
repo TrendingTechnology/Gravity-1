@@ -1692,10 +1692,11 @@ namespace gravity {
         std::vector<double> obbt_solution, cut_vec;
         string msname;
         int viol=0, viol_i=0;
-//        int worker_id, nb_workers;                            
-//        auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
-//        auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
-//    DebugOn(endl<<endl<<"wid "<<worker_id<<"bmc "<<batch_model_count<<endl);
+#ifdef USE_MPI
+        int worker_id, nb_workers;
+        auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
+        auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
+#endif
         for (auto s=0;s<batch_model_count;s++)
         {
             auto m=batch_models[s];
@@ -1711,8 +1712,13 @@ namespace gravity {
                 obbt_solution.resize(m->_nb_vars);
                 m->get_solution(obbt_solution);
                 cut_vec.resize(0);
+                auto t1=get_wall_time();
                 viol_i=generate_cuts_iterative(interior_model, obbt_solution, lin, msname, oacuts, active_tol, cut_vec);
                 lin->add_cuts_to_model(cut_vec, *this);
+                auto t2=get_wall_time();
+#ifdef USE_MPI
+                DebugOn(endl<<endl<<"wid "<<worker_id<<" cuts_MPI "<<(t2-t1)<<endl);
+#endif
                 m->set_solution(obbt_solution);
                 if(viol_i==1){
                     repeat_list.push_back(m->_name);
@@ -1907,10 +1913,9 @@ namespace gravity {
                 }
                 DebugOff("I'm worker ID: " << worker_id << ", I will be running models " << limits[worker_id] << " to " << limits[worker_id+1]-1 << endl);
                 int count=0;
-auto vec = vector<shared_ptr<gravity::Model<double>>>();
-
-t1=get_wall_time();         
-for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
+                auto vec = vector<shared_ptr<gravity::Model<double>>>();
+                t1=get_wall_time();
+                for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
                     msname=objective_models.at(i);
                     mname=msname;
                     std::size_t pos = msname.find("|");
@@ -1933,27 +1938,13 @@ for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
                     models[count]->reindex();
                     vec.push_back(models[count++]);
                 }
-<<<<<<< HEAD
-//t2=get_wall_time();
-//DebugOn(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
-//t1=get_wall_time();
+                t2=get_wall_time();
+                DebugOff(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
+                t1=get_wall_time();
                 run_parallel(vec,stype,tol,nr_threads,lin_solver,max_iter);
-//t2=get_wall_time();
-//DebugOn(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);
-=======
-t2=get_wall_time();
-DebugOff(endl<<endl<<"wid "<<worker_id<<" model vec prep "<<(t2-t1)<<endl);
-t1=get_wall_time(); 
-                run_parallel(vec,stype,tol,nr_threads,lin_solver,max_iter);
-t2=get_wall_time();  
-DebugOff(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);          
->>>>>>> 58e3a827f0f60729d20312b6c437b187517c7d00
-}
-//t1=get_wall_time(); 
-  //          MPI_Barrier(MPI_COMM_WORLD);
-    //        t2=get_wall_time();
-//DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier1 time "<<(t2-t1)<<endl);
-<<<<<<< HEAD
+                t2=get_wall_time();
+                DebugOff(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);
+            }
 //            t1=get_wall_time();
 //            send_status_new(models,limits, sol_status);
 //            t2=get_wall_time();
@@ -1969,33 +1960,11 @@ DebugOff(endl<<endl<<"wid "<<worker_id<<" run para time "<<(t2-t1)<<endl);
 //                t2=get_wall_time();
 //                DebugOn(endl<<endl<<"wid "<<worker_id<<" send obj "<<(t2-t1)<<endl);
 //            }
-}
+        }
 //        t1=get_wall_time();
 //        MPI_Barrier(MPI_COMM_WORLD);
 //        t2=get_wall_time();
 //        DebugOn(endl<<endl<<"wid "<<worker_id<<"barrier3 time "<<(t2-t1)<<endl);
-=======
-            //t1=get_wall_time();
-	    //send_status_new(models,limits, sol_status);
-            //t2=get_wall_time();
-            //DebugOn(endl<<endl<<"wid "<<worker_id<<" send status "<<(t2-t1)<<endl);
-            //t1=get_wall_time();
-	   // MPI_Barrier(MPI_COMM_WORLD);
-	    //t2=get_wall_time();                                                                      
-            DebugOff(endl<<endl<<"wid "<<worker_id<<"barrier2 time "<<(t2-t1)<<endl);        
-            //if(share_all_obj){
-                /* We will send the objective value of successful models */
-                //t1=get_wall_time();
-                //send_obj_all_new(models,limits, sol_obj);
-                //t2=get_wall_time();
-                //DebugOn(endl<<endl<<"wid "<<worker_id<<" send obj "<<(t2-t1)<<endl);
-            //}
-        }
-	t1=get_wall_time();
-        MPI_Barrier(MPI_COMM_WORLD);
-	t2=get_wall_time();
-        DebugOff(endl<<endl<<"wid "<<worker_id<<"barrier3 time "<<(t2-t1)<<endl); 
->>>>>>> 58e3a827f0f60729d20312b6c437b187517c7d00
         return max(err_rank, err_size);
         
     }

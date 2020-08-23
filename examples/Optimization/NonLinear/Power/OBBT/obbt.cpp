@@ -33,7 +33,7 @@ int main (int argc, char * argv[]) {
     string sdp_cuts_s = "yes";
     
     string current_s = "yes";
-    string time_s = "1000";
+    string time_s = "6000";
     string sdp_kim_s="yes";
     string threads_s="1";
     
@@ -140,7 +140,7 @@ int main (int argc, char * argv[]) {
         sdp_kim = true;
     }
 #endif
-    
+    max_time=6000;
     current=true;
     auto nb_threads=std::atoi(threads_s.c_str());
     PowerNet grid;
