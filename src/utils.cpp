@@ -255,9 +255,10 @@ std::vector<size_t> bounds(unsigned parts, size_t mem) {
 }
 
 /*Split "mem" into "parts", e.g. if mem = 10 and parts = 4 you will have: 0,2,4,6,10, i.e., [0,3], [3,6], [6], [6,8], [810] if possible the function will split mem into equal chuncks, if not the first few chunks will be larger by 1. Try to assign each mem back to the part it was assigned before*/
-std::vector<size_t> bounds_reassign(unsigned parts, size_t mem, vector<string>& objective_models, map<string,int>& old_map, int nb_threads) {
+std::vector<size_t> bounds_reassign(unsigned parts, vector<string>& objective_models, map<string,int>& old_map, int nb_threads) {
     std::vector<size_t>bnd;
     std::vector<std::string> unassign, new_objective_models;
+    size_t mem=objective_models.size();
     unsigned new_parts = parts;
     if(parts>mem){
         DebugOff("In function std::vector<size_t> bounds(unsigned parts, size_t mem), parts cannot be strictly greater than mem");

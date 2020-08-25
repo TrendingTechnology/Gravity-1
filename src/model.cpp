@@ -6142,6 +6142,7 @@ namespace gravity {
         string cut_type;
         vector<int> o_status;
         o_status.push_back(0);
+        map<string,int> old_map;
         if(this->_status==0){
             upper_bound=this->get_obj_val();
             if(relaxed_model->_status==0)
@@ -6166,10 +6167,10 @@ namespace gravity {
                     share_obj=true;
                     if(linearize){
                         if(run_obbt_iter==1){
-                            active_tol=obbt_subproblem_tol;
+                            active_tol=0.1;
                         }
                         else if(run_obbt_iter<=3){
-                            active_tol=obbt_subproblem_tol;
+                            active_tol=0.1;
                         }
                         else{
                             active_tol=obbt_subproblem_tol;
@@ -6205,7 +6206,7 @@ namespace gravity {
                                     DebugOn("oa cuts = "<<oacuts<<endl);
                                 }
 #endif
-   				auto st=obbt_model->has_violated_constraints(lb_solver_tol);                    
+                                auto st=obbt_model->has_violated_constraints(lb_solver_tol);
                                 if(st.second){                                                        
                                         DebugOn("viol status LB");                                    
                                 }
@@ -6241,7 +6242,7 @@ namespace gravity {
                             DebugOn("Gap initial "<<gaplin<<" and cuts initial "<<oacuts<<" and cuts buildoa "<<oacuts_init<<endl);
 #endif
                             oacuts_init=oacuts;
-			    obbt_model->scale_coefs(1e3);
+                            obbt_model->scale_coefs(1e3);
                         }
                     }
                     int count_var=0;
@@ -6370,11 +6371,11 @@ namespace gravity {
 #ifdef USE_MPI
                                                 
                                                 batch_time_start = get_wall_time();
-                                
-                                                run_MPI_new(objective_models, sol_obj, sol_status,batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads,"ma27",2000,2000, share_obj);
                                                 auto nb_workers_ = std::min((size_t)nb_workers, objective_models.size());
+                                                limits = bounds_reassign(nb_workers, objective_models,old_map, nb_threads);
+                                                run_MPI_new(objective_models, sol_obj, sol_status,batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads,"ma27",2000,2000, share_obj, limits);
+                                           
                                                 /* Split models into equal loads */
-                                                std::vector<size_t> limits = bounds(nb_workers_, objective_models.size());
                                                 batch_time_end = get_wall_time();
                                                 batch_time = batch_time_end-batch_time_start;
                                                 DebugOn(endl<<endl<<"wid "<<worker_id<<" Batch "<<batch_time<<" cuts "<<oacuts<<endl);
