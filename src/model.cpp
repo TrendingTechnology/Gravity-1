@@ -6205,7 +6205,7 @@ namespace gravity {
                                     DebugOn("oa cuts = "<<oacuts<<endl);
                                 }
 #endif
-   auto st=obbt_model->has_violated_constraints(lb_solver_tol);                    
+   				auto st=obbt_model->has_violated_constraints(lb_solver_tol);                    
                                 if(st.second){                                                        
                                         DebugOn("viol status LB");                                    
                                 }
@@ -6376,7 +6376,7 @@ namespace gravity {
                                                 /* Split models into equal loads */
                                                 std::vector<size_t> limits = bounds(nb_workers_, objective_models.size());
                                                 batch_time_end = get_wall_time();
-                                                batch_time = batch_time_end - batch_time_start;
+                                                batch_time = batch_time_end-batch_time_start;
                                                 DebugOn(endl<<endl<<"wid "<<worker_id<<" Batch "<<batch_time<<" cuts "<<oacuts<<endl);
 #else
                                                 run_parallel_new(objective_models, sol_obj, sol_status, batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads, "ma27", 2000);
@@ -6392,10 +6392,10 @@ namespace gravity {
                                                         
 #ifdef USE_MPI
                                                         if(worker_id+1<limits.size()){
-                                                        vec_size=limits[worker_id+1]-limits[worker_id];
+                                                        	vec_size=limits[worker_id+1]-limits[worker_id];
                                                         }
                                                         else{
-                                                            vec_size=0;
+                                                        	vec_size=0;
                                                         }
                                                         
                                                         DebugOn(endl<<endl<<"wid "<<worker_id<<" resolving "<<obbt_subproblem_count<<endl);
@@ -6411,7 +6411,7 @@ namespace gravity {
                                                         batch_time_start = get_wall_time();
                                                         run_parallel(vec, lb_solver_type, obbt_subproblem_tol, nb_threads, 2000);
                                                         batch_time_end = get_wall_time();
-                                                        batch_time=batch_time_end=batch_time_start;
+                                                        batch_time=batch_time_end-batch_time_start;
 #ifdef USE_MPI
                                                         DebugOn(endl<<endl<<"wid "<<worker_id<<" Batch "<<batch_time<<" cuts "<<oacuts<<" lin count"<<lin_count<<endl);
 #endif
@@ -6499,7 +6499,7 @@ namespace gravity {
                                                 send_obj_all_new(batch_models,limits, sol_obj);
                                                 MPI_Barrier(MPI_COMM_WORLD);
                                                 batch_time_end = get_wall_time();
-                                                batch_time=batch_time_end=batch_time_start;
+                                                batch_time=batch_time_end-batch_time_start;
                                                 DebugOn(endl<<endl<<"wid "<<worker_id<<" mpi time "<<batch_time<<endl);
                                                 if(worker_id==0){
                                                     DebugOn("time before bounds update "<<get_wall_time()-solver_time_start<<endl);
@@ -6650,8 +6650,6 @@ namespace gravity {
                                                 sol_obj.clear();
                                                 auto t=get_wall_time()-solver_time_start;
 #ifdef USE_MPI                                                                                          
-                                                DebugOff(endl<<endl<<"wid"<<Batch "<<batch_time<<" cuts "<<oacuts<<" time "<<t<<endl);
-#else
                                                 DebugOff("Batch time "<<batch_time<<" nb oa cuts "<<oacuts<<" solver time "<<t<<endl);
 #endif
                                                 //                                                    if(linearize){
@@ -6875,8 +6873,11 @@ namespace gravity {
                                 }
                                 
 #ifdef USE_MPI
+				batch_time_start=get_wall_time();
                                 MPI_Bcast(&lower_bound, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
                                 gap=100*(upper_bound - lower_bound)/std::abs(upper_bound);
+				batch_time_end=get_wall_time();
+				DebugOn(endl<<endl<<"g bcast time "<<batch_time_end-batch_time_start<<endl);
 #endif
                                 
                                 if (std::abs(upper_bound- lower_bound)<=abs_tol && ((upper_bound- lower_bound))/(std::abs(upper_bound)+zero_tol)<=rel_tol)

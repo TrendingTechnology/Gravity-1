@@ -140,7 +140,6 @@ int main (int argc, char * argv[]) {
         sdp_kim = true;
     }
 #endif
-    max_time=6000;
     current=true;
     auto nb_threads=std::atoi(threads_s.c_str());
     PowerNet grid;
@@ -174,7 +173,7 @@ int main (int argc, char * argv[]) {
     int oacuts=0, oacuts_init=0;
     SolverType ub_solver_type = ipopt, lb_solver_type = ipopt;
     bool scale_objective=true;
-    linearize=true;
+    //linearize=true;
     if(!linearize){
         auto nonlin_obj=true;
         current=true;
