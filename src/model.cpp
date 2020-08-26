@@ -6373,7 +6373,7 @@ namespace gravity {
                                                 batch_time_start = get_wall_time();
                                                 auto nb_workers_ = std::min((size_t)nb_workers, objective_models.size());
                                                 limits = bounds_reassign(nb_workers, objective_models,old_map, nb_threads);
-                                                run_MPI_new(objective_models, sol_obj, sol_status,batch_models,lb_solver_type,obbt_subproblem_tol,nb_threads,"ma27",2000,2000, share_obj, limits);
+                                                run_MPI_new(objective_models, sol_obj, sol_status,batch_models,limits,lb_solver_type,obbt_subproblem_tol,nb_threads,"ma27",2000,2000, share_obj);
                                            
                                                 /* Split models into equal loads */
                                                 batch_time_end = get_wall_time();
