@@ -260,6 +260,8 @@ std::vector<size_t> bounds_reassign(unsigned parts, vector<string>& objective_mo
     std::vector<std::string> unassign, new_objective_models;
     size_t mem=objective_models.size();
     unsigned new_parts = parts;
+    size_t delta = mem / new_parts;
+    size_t remainder = mem % new_parts;
     if(parts>mem){
         DebugOff("In function std::vector<size_t> bounds(unsigned parts, size_t mem), parts cannot be strictly greater than mem");
         new_parts = mem;
@@ -268,12 +270,18 @@ std::vector<size_t> bounds_reassign(unsigned parts, vector<string>& objective_mo
         bnd.push_back(0);
     }
     
-    int wid;
+    int wid, wmax;
     for(auto &s:objective_models){
         if(old_map.find(s)!=old_map.end()){
             wid=old_map.at(s);
+            if(wid<remainder){
+                wmax=delta+1;
+            }
+            else{
+                wmax=delta;
+            }
             if(wid+1<bnd.size()){
-            if(bnd[wid+1] < nb_threads){
+            if(bnd[wid+1] < wmax){
                 bnd[wid+1]++;
             }
             else{
@@ -289,14 +297,26 @@ std::vector<size_t> bounds_reassign(unsigned parts, vector<string>& objective_mo
         }
     }
     wid=0;
+    if(wid<remainder){
+        wmax=delta+1;
+    }
+    else{
+        wmax=delta;
+    }
     for(auto u=unassign.begin();u<unassign.end();u++){
-            if(bnd[wid+1] < nb_threads){
+            if(bnd[wid+1] < wmax){
             old_map[*u]=wid;
             bnd[wid+1]++;
         }
             else{
                 wid++;
                 u--;
+                if(wid<remainder){
+                    wmax=delta+1;
+                }
+                else{
+                    wmax=delta;
+                }
                // bnd[wid+1]=bnd[wid];
             }
     }
