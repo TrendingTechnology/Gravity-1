@@ -616,30 +616,28 @@ namespace gravity {
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    
+
     template<typename type>
     void send_status_new(const vector<shared_ptr<gravity::Model<type>>>& models, const vector<size_t>& limits, vector<int>& sol_status){
         int worker_id, nb_workers;
         auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
         auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
-        int count=0;
         DebugOff("I'm worker ID: " << worker_id << ", I'm getting ready to send my status " << endl);
-        for (auto w_id = 0; w_id<nb_workers; w_id++) {
-            if(w_id+1<limits.size()){
-                count=0;
-                if(worker_id==w_id){
-                    for (auto i = limits[w_id]; i < limits[w_id+1]; i++) {
-                        auto model = models[count++];
-                        sol_status[i]=model->_status;
-                    }
+            if(worker_id+1<limits.size()){
+                for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
+                    auto model = models[i-limits[worker_id]];
+                    sol_status[i]=model->_status;
                 }
-                DebugOff("I'm worker ID: " << worker_id << "I will call MPI_Bcasr with i = " << i << " and w_id =  " << w_id << endl);
-                MPI_Bcast(&sol_status[limits[w_id]], (limits[w_id+1]-limits[w_id]), MPI_INT, w_id, MPI_COMM_WORLD);
             }
+        std::vector<int> d, counts;
+        for(auto l=limits.begin()+1;l!=limits.end();l++){
+            counts.push_back(*l-*(l-1));
+            d.push_back(*(l-1));
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        
+        MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+                       &sol_status[0], &counts[0], &d[0], MPI_INT, MPI_COMM_WORLD);
     }
-    
     /** Send model solutions to all workers
      @models vector of models with stored solutions
      @limits vector specifying which models are assigned to which workers
@@ -724,33 +722,38 @@ namespace gravity {
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    template<typename type>
+
+
+template<typename type>
     void send_obj_all_new(const vector<shared_ptr<gravity::Model<type>>>& models, const vector<size_t>& limits, vector<double>& sol_obj){
         int worker_id, nb_workers;
         auto err_rank = MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
         auto err_size = MPI_Comm_size(MPI_COMM_WORLD, &nb_workers);
         auto nb_workers_ = std::min((size_t)nb_workers, models.size());
-        int count=0;
         DebugOff("nb_workers_ = " << nb_workers_ << ", models.size() = " << models.size() << endl);
         DebugOff("I'm worker ID: " << worker_id << ", I'm getting ready to broadcast my solutions " << endl);
-        for (auto w_id = 0; w_id<nb_workers; w_id++) {
-            if(w_id+1<limits.size()){
-                count=0;
-                if(worker_id==w_id){
-                    for (auto i = limits[w_id]; i < limits[w_id+1]; i++) {
-                        auto model = models[count++];
-                        if(model->_status==0){
-                            sol_obj[i]=model->_obj->_val->at(0);
-                        }
+            if(worker_id+1<limits.size()){
+                for (auto i = limits[worker_id]; i < limits[worker_id+1]; i++) {
+                    auto model = models[i-limits[worker_id]];
+                    if(model->_status==0){
+                        sol_obj[i]=model->_obj->_val->at(0);
                     }
                 }
-                DebugOff("I'm worker ID: " << worker_id << "I will call MPI_Bcasr with i = " << i << " and w_id =  " << w_id << endl);
-                MPI_Bcast(&sol_obj[limits[w_id]], (limits[w_id+1]-limits[w_id]), MPI_DOUBLE, w_id, MPI_COMM_WORLD);
             }
+        std::vector<int> d, counts;
+        for(auto l=limits.begin()+1;l!=limits.end();l++){
+            counts.push_back(*l-*(l-1));
+            d.push_back(*(l-1));
         }
+
+        
+        MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+                       &sol_obj[0], &counts[0], &d[0], MPI_DOUBLE, MPI_COMM_WORLD);
+
         //MPI_Barrier(MPI_COMM_WORLD);
-    }
-    
+        //    } 
+        }   
+
     /** Runs models stored in the vector in parallel using MPI
      @models vector of models to run in parallel
      @stype Solver type
