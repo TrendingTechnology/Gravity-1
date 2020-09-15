@@ -322,13 +322,14 @@ namespace gravity {
 #ifdef USE_MPI
        DebugOff(endl<<endl<<"wid "<<worker_id<<" ipopt solve time " << t2-t1<<endl<<endl);
 #endif
-	   for (size_t i = 0; i < nr_threads_; ++i) {
-             auto st=models[i]->has_violated_constraints(tol);
-             if(st.second){
-                 DebugOn("viol status "<<endl);
-		 models[i]->_status=-1;
-             }
-         }
+
+//        for (size_t i = 0; i < nr_threads_; ++i) {
+//             auto st=models[i]->has_violated_constraints(tol);
+//             if(st.second){
+//                 DebugOn("viol status "<<endl);
+//                 models[i]->_status=-1;
+//             }
+//         }
         return 0;
     }
     
@@ -897,7 +898,7 @@ namespace gravity {
         vector<double> xcurrent, xres;
         get_solution(xsolution);
         set_solution(obbt_solution);
-        const double active_tol_sol=1e-14, zero_tol=1e-6;
+        const double active_tol_sol=1e-12, zero_tol=1e-6;
         bool constr_viol=false;
         bool interior_solv=true;
         vector<double> c_val ;
@@ -1161,7 +1162,7 @@ namespace gravity {
 #endif
         get_solution(xsolution);
         set_solution(obbt_solution);
-        const double active_tol_sol=1e-14, zero_tol=1e-6;
+        const double active_tol_sol=1e-12, zero_tol=1e-6;
         int constr_viol=0;
         bool interior_solv=true;
         vector<double> c_val ;
@@ -1256,8 +1257,8 @@ namespace gravity {
                                         DebugOff("status "<< interior._status);
                                         //                                        if((!con->is_convex()||con->is_rotated_soc() || con->check_soc()) && (interior._status==0||interior._status==1))  {
                                         if((!con->is_convex()||con->is_rotated_soc() || con->check_soc()))  {
-                                            if(con->xval_within_bounds(i, xcurrent)){
-                                                if(!(lin->linearmodel_violates_x(xcurrent, con->_name, i, active_tol))){
+                                            if(true){
+                                                if(true){
                                                     auto con_interior=interior.get_constraint(cname);
                                                     xinterior=con_interior->get_x_ignore(i, "eta_interior"); /** ignore the Eta (slack) variable */
                                                     auto res_search=con->binary_line_search(xinterior, i);
