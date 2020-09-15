@@ -6570,27 +6570,22 @@ std::tuple<bool,int,double,double,double,double,double,double,int,int> Model<typ
                                                         DebugOn("calling cuts_mpi "<<obbt_subproblem_count<<endl);
                                                     }
                                                     
-                                                    viol_array[worker_id]=0;
+                                                    //viol_array[worker_id]=0;
                                                     viol_i=0;
                                                     viol=0;
                                                     if(worker_id+1<limits.size()){
-                                                            violi=relaxed_model->cuts_parallel(batch_models, limits[worker_id+1]-limits[worker_id], interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
+                                                            viol_i=relaxed_model->cuts_parallel(batch_models, limits[worker_id+1]-limits[worker_id], interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
                                                     }
-                                                    viol_array[worker_id]=violi;
-                                                    MPI_Allgather(&viol_array[worker_id], 1, MPI_INT, &viol_array[0], 1, MPI_INT, MPI_COMM_WORLD);
+                                                    //viol_array[worker_id]=viol_i;
+                                                    MPI_Allgather(&viol_i, 1, MPI_INT, &viol_array[0], 1, MPI_INT, MPI_COMM_WORLD);
                                                     
-                                                    //DebugOn("broadcasting viol array"<<endl);
-                                                    //                                                        for (auto w_id = 0; w_id<nb_workers; w_id++) {
-                                                    //                                                                MPI_Bcast(&viol_array[w_id], 1, MPI_INT, w_id, MPI_COMM_WORLD);
-                                                    //                                                            }
-                                                    //                                                        viol=0;
-                                                    //                                                        for(auto &v:viol_array){
+                                                                      for(auto &v:viol_array){
                                                     //DebugOn(v<<endl);
-                                                    //if(v==1){
-                                                    //                                                                viol=1;
-                                                    //                                                                break;
-                                                    //                                                            }
-                                                    //                                                    }
+                                                    if(v==1){
+                                                                                       viol=1;
+                                                                       break;
+                                                                                                          }
+                                                                                                       }
 #else
                                                     viol=relaxed_model->cuts_parallel(batch_models, batch_model_count, interior_model, obbt_model, oacuts, active_tol, run_obbt_iter, range_tol, cut_type, repeat_list);
 #endif
